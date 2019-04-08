@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+        body {
+            padding-top: 60px;
+        }
+        #tbl {margin-top: 30px;}
+        #tmpl {display: none;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form id="frm" name="frm">
+            <div class="input-group input-group-lg">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-lg">성명</span>
+                </div>
+                <input name="name" id="name" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-lg">
+            </div>
+            <div class="input-group input-group-lg">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-lg">나이</span>
+                </div>
+                <input name="age" id="age" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-lg">
+            </div>
+        </form>
+        <button id="add_btn" type="button" class="btn btn-primary btn-lg btn-block">데이터 추가</button>
+    
+        <table id="tbl" class="table table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>이름</th>
+                    <th>나이</th>
+                </tr>
+                <tr id="tmpl">
+                    <td></td>
+                    <td></td>
+                </tr>
+            </thead>
+            <tbody>
+                
+            </tbody>
+        </table>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/5.9.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.9.3/firebase-firestore.js"></script>
+    <script>
+        var config = {
+            apiKey: "AIzaSyCOxYxggYvDGnzKJ0uUhALxRFziAzs03l8",
+            authDomain: "firestore-sample-688f3.firebaseapp.com",
+            databaseURL: "https://firestore-sample-688f3.firebaseio.com",
+            projectId: "firestore-sample-688f3",
+            storageBucket: "firestore-sample-688f3.appspot.com",
+            messagingSenderId: "746064953723"
+        };
+        firebase.initializeApp(config);
+
+        var db = firebase.firestore();
+    </script>
+
+    <script>
+        function json( form ) {
+            var obj = {};
+            var elements = form.querySelectorAll('input, select, textarea');
+            for( var i = 0; i < elements.length; ++i ) {
+                var element = elements[i];
+                var name = element.name;
+                var value = element.value;
+
+                if( name ) {
+                    obj[ name ] = value;
+                }
+            }
+
+            return obj;
+        }
+
+        document.querySelector('#add_btn').addEventListener('click', (e)=>{
+            e.preventDefault();
+
+            var data = json(document.querySelector('#frm'));
+            data.create_date = new Date();
+
+            db
+                .collection('users')
+                .add(data)
+                .then(function(docRef) {
+                    console.log('Document written with ID: ', docRef.id);
+                    document.querySelector('#name').value = '';
+                    document.querySelector('#age').value = '';
+                })
+                .catch(function(error) {
+                    console.error('Error adding document: ', error);
+                });
+        });
+
+        var tbl = document.querySelector('#tbl tbody');
+
+        db.collection('users')
+            .orderBy('create_date')
+            .onSnapshot(function(querySnapshot) {
+                // 싹 삭제
+                while (tbl.firstChild) {
+                    tbl.removeChild(tbl.firstChild);
+                }
+
+                querySnapshot.forEach(function(doc) {
+                    var data = doc.data();
+                    var tmpl = document.querySelector('#tmpl').cloneNode(true);
+                    tmpl.removeAttribute('id');
+                    
+                    var td = tmpl.querySelectorAll('td')
+                    td[0].innerHTML = data.name;
+                    td[1].innerHTML = data.age;
+                    tbl.append(tmpl);
+
+                    console.log('user : ', data);
+                });
+                
+            }, function(error) {
+                console.log('error : ', error);
+            });
+    </script>
+</body>
+</html>
